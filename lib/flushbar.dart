@@ -69,7 +69,7 @@ class Flushbar<T> extends StatefulWidget {
   }
 
   /// A callback for you to listen to the different Flushbar status
-  final FlushbarStatusCallback? onStatusChanged;
+  FlushbarStatusCallback? onStatusChanged;
 
   /// The title displayed to the user
   final String? title;
