@@ -23,13 +23,7 @@ class FlushbarRoute<T> extends OverlayRoute<T> {
   FlushbarRoute({
     required this.flushbar,
     RouteSettings? settings,
-  })  : _builder = Builder(builder: (BuildContext innerContext) {
-          return GestureDetector(
-            onTap:
-                flushbar.onTap != null ? () => flushbar.onTap!(flushbar) : null,
-            child: flushbar,
-          );
-        }),
+  })  : _builder = Builder(builder: (BuildContext innerContext) => flushbar),
         _onStatusChanged = flushbar.onStatusChanged,
         super(settings: settings) {
     _configureAlignment(flushbar.flushbarPosition);
@@ -63,7 +57,9 @@ class FlushbarRoute<T> extends OverlayRoute<T> {
 
   @override
   Future<RoutePopDisposition> willPop() {
-    if (!flushbar.isDismissible) {
+    if (!flushbar.isDismissible &&
+        ((flushbar.duration == null) ||
+            (flushbar.duration != null && _timer?.isActive == true))) {
       return Future.value(RoutePopDisposition.doNotPop);
     }
 
@@ -89,6 +85,14 @@ class FlushbarRoute<T> extends OverlayRoute<T> {
       );
     }
 
+    Widget child =  flushbar.isDismissible
+        ? _getDismissibleFlushbar(_builder)
+        : _getFlushbar();
+
+    if (flushbar.safeArea) {
+      child = SafeArea(child: child);
+    }
+
     overlays.add(
       OverlayEntry(
           builder: (BuildContext context) {
@@ -98,9 +102,7 @@ class FlushbarRoute<T> extends OverlayRoute<T> {
               explicitChildNodes: true,
               child: AlignTransition(
                 alignment: _animation!,
-                child: flushbar.isDismissible
-                    ? _getDismissibleFlushbar(_builder)
-                    : _getFlushbar(),
+                child: child,
               ),
             );
             return annotatedChild;
@@ -435,6 +437,7 @@ class FlushbarRoute<T> extends OverlayRoute<T> {
         'Cannot dispose a $runtimeType twice.');
     _controller?.dispose();
     _transitionCompleter.complete(_result);
+    _timer?.cancel();
     super.dispose();
   }
 
